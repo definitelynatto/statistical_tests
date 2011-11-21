@@ -180,7 +180,7 @@ class ANOVA(StatisticalTest):
         print f_psi, group_size
         return (f_psi-1)/float(f_psi-1+2*group_size)
     
-    @ classmethod
+    @classmethod
     def estimate_partial_effect_size(cls, f, df, n):
         """Estimate the partial effect size of an effect based on its f, df, and total sample size"""
         if not isinstance(f, float) and not isinstance(f, int):
