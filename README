@@ -1,0 +1,6 @@
+This Python module contains a variety of classes and extension modules for
+conducting assorted statistical tests. I mostly created it because I did not
+want to learn how to use SPSS or R, but also wanted to lay some groundwork for
+distributing tools to properly conduct tests performed incorrectly in many
+commercial statistical software packages such as SPSS. It is still a work in
+progress, but I will add more useful documentation over time.
