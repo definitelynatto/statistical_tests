@@ -1,0 +1,27 @@
+Test Results:
+--------------------------------
+Test Statistic: 0.6
+σ²:             0.24
+σ:              0.489897948557
+
+Two-Tailed Test of Population of 1 = Population of Not 1
+--------------------------------
+p:              0.0230141375652
+Upper CV:       0.6
+Lower CV:       -0.6
+Actual α:       0.0230141375652
+Decision:       Reject H₀
+
+Lower Tail Test of Population of 1 ≥ Population of Not 1
+--------------------------------
+p:              0.999453333045
+Lower CV:       -0.6
+Actual α:       0.0115070687826
+Decision:       Fail to Reject H₀
+
+Upper Tail Test of Population of 1 ≤ Population of Not 1
+--------------------------------
+p:              0.0115070687826
+Upper CV:       0.6
+Actual α:       0.0115070687826
+Decision:       Reject H₀

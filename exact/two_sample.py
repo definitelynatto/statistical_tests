@@ -1,16 +1,20 @@
 """
 This module contains exact two-sample tests.
 
-TODO: use hypothesized values, report variances, report confidence intervals, allow fisher test to work if more than 2 outcomes
+TODO: use hypothesized values, report variances, report confidence intervals,
+allow fisher test to work if more than 2 outcomes
 """
 
 import csv, new
 from itertools import combinations
 from scipy import stats
+import statistical_tests
 from statistical_tests.exact import ExactTest
 
 class ExactTwoSampleDistribution(object):
-    """An exact distribution for a matched-pair test"""
+    """
+    An exact distribution for a matched-pair test
+    """
     def __init__(self, replacement_values, smaller_group_size):
         # validate replacement_values
         if not isinstance(replacement_values, list) and not isinstance(replacement_values, tuple):
@@ -44,28 +48,45 @@ class ExactTwoSampleDistribution(object):
         # store the mean of the distribution
         self.__mean = sum(x for x in self.__sampling_distribution)/float(len(self.__sampling_distribution))
     def possible_scores(self):
-        """Return the list of possible scores in the distribution"""
+        """
+        Return the list of possible scores in the distribution
+        """
         return self.__possible_scores
     def var(self):
-        """Return the variance of this distribution"""
+        """
+        Return the variance of this distribution
+        """
         return self.__variance
     def std(self):
-        """Return the standard deviation of this distribution"""
+        """
+        Return the standard deviation of this distribution
+        """
         return math.sqrt(self.__variance) if self.__variance else None
     def median(self):
-        """The expected value of the sampling distribution"""
+        """
+        The expected value of the sampling distribution
+        """
         return self.__expected_value
     def mean(self):
-        """The expected value of the sampling distribution (same as median since it is symmetrical)"""
+        """
+        The mean of the sampling distribution
+        """
         return self.__mean
     def frequency_of(self, outcome):
-        """Return the number of occurrences of outcome in the sampling distribution"""
+        """
+        Return the number of occurrences of outcome in the sampling
+        distribution
+        """
         return self.__score_frequencies.setdefault(outcome, 0)
     def pmf(self, outcome):
-        """Return the probability mass of a specified outcome"""
+        """
+        Return the probability mass of a specified outcome
+        """
         return self.__score_probabilities.setdefault(outcome, 0)
     def cvs1(self, alpha=0.05):
-        """Get (LCV, UCV) for one-tailed tests"""
+        """
+        Get (LCV, UCV) for one-tailed tests
+        """
         num_errors = int(alpha*len(self.__sampling_distribution))
         f = 0; i = -1
         while f+self.__score_frequencies[self.__possible_scores[i+1]] <= num_errors:
@@ -79,7 +100,9 @@ class ExactTwoSampleDistribution(object):
         ucv = self.__possible_scores[i] if i < len(self.__possible_scores) else None
         return lcv, ucv
     def cvs2(self, alpha=0.05):
-        """Get (LCV, UCV) for two-tailed tests"""
+        """
+        Get (LCV, UCV) for two-tailed tests
+        """
         num_errors = int(alpha*len(self.__sampling_distribution))
         error_scores = list()
         f = 0
@@ -94,24 +117,34 @@ class ExactTwoSampleDistribution(object):
         except: pass
         return lcv, ucv
     def p_lower(self, outcome):
-        """Return probability of getting a value less than or equal to outcome"""
+        """
+        Return probability of getting a value less than or equal to outcome
+        """
         return sum(self.pmf(self.__possible_scores[i]) for i in range(len(self.__possible_scores)) if self.__delta_values[i] <= outcome-self.__expected_value)
     def p_upper(self, outcome):
-        """Return probability of getting a value greater than or equal to outcome"""
+        """
+        Return probability of getting a value greater than or equal to outcome
+        """
         return sum(self.pmf(self.__possible_scores[i]) for i in range(len(self.__possible_scores)) if self.__delta_values[i] >= outcome-self.__expected_value)
     def p_two(self, outcome):
-        """Return probability of getting a value whose distance to the expected value is greater or equal to that of outcome"""
+        """
+        Return probability of getting a value whose distance to the expected
+        value is greater or equal to that of outcome
+        """
         return sum(self.pmf(self.__possible_scores[i]) for i in range(len(self.__possible_scores)) if abs(self.__delta_values[i]) >= abs(outcome-self.__expected_value))
 
 class ExactTwoSampleTest(ExactTest):
-    """A base class for exact two-sample tests"""
+    """
+    A base class for exact two-sample tests
+    """
     def __init__(self,
                  group_key='Group',
                  outcome_key='Outcome',
                  groups = {'1':[], '2':[]},
                  population_of_interest=None,
                  *args,
-                 **kwargs):
+                 **kwargs
+                 ):
         ExactTest.__init__(self, *args, **kwargs)
         
         # validate input parameters
@@ -136,7 +169,7 @@ class ExactTwoSampleTest(ExactTest):
         for k in groups.keys():
             if not groups[k]:
                 raise ValueError('No scores found for Group: %s.'%k)
-            if not isinstance(groups[k], list) and not isinstance(groups[k], tuple):
+            if not ExactTwoSampleTest.is_array_like(groups[k]):
                 raise TypeError('Scores for Group: %s must be a list or tuple.'%k)
             groups[k] = list(groups[k])
         if not population_of_interest: population_of_interest = groups.keys()[0]
@@ -160,43 +193,56 @@ class ExactTwoSampleTest(ExactTest):
         self.n = len(self.combined_scores)
     
     def create_distribution(self):
-        """Create an exact distribution from the values in the smaller group"""
+        """
+        Create an exact distribution from the values in the smaller group
+        """
         self.distribution = ExactTwoSampleDistribution(self.replacement_values, len(self.groups[self.smaller_group_key]))
     
     def validate_numericality(self):
-        """Validate the numericality of the data"""
+        """
+        Validate the numericality of the data
+        """
         try:
             for k in self.groups.keys(): self.groups[k] = [float(x) for x in self.groups[k]]
         except:
             raise ValueError('Non-numeric data encountered in category %s.'%self.outcome_key)
     
     def perform_test(self):
-        """Perform a two-sample test using all of the information stored in the data attributes"""
+        """
+        Perform a two-sample test using all of the information stored in the
+        data attributes
+        """
         # gather test results
-        try: self.results.setdefault(self.kTestStatKey, sum(self.smaller_group_replacement_values))
-        except: pass
-        self.results.setdefault(self.kVarianceKey, self.distribution.var())
-        self.results.setdefault(self.kStandardDeviationKey, self.distribution.std())
+        if self.results.test_statistic is None: # e.g., FisherExactTest sets test_statistic manually
+            self.results.test_statistic = sum(self.smaller_group_replacement_values)
+            self.results.var = self.distribution.var()
+            self.results.std = self.distribution.std()
         
         # get the p-values
-        self.results[self.kPLowerKey] = self.distribution.p_lower(self.results[self.kTestStatKey])
-        self.results[self.kPUpperKey] = self.distribution.p_upper(self.results[self.kTestStatKey])
-        self.results[self.kP2Key] = self.distribution.p_two(self.results[self.kTestStatKey])
+        self.results.p_lower = self.distribution.p_lower(self.results.test_statistic)
+        self.results.p_upper = self.distribution.p_upper(self.results.test_statistic)
+        self.results.p_two = self.distribution.p_two(self.results.test_statistic)
         
         # get the critical values
-        self.results[self.kLCV1Key], self.results[self.kUCV1Key] = self.distribution.cvs1(self.alpha)
-        self.results[self.kLCV2Key], self.results[self.kUCV2Key] = self.distribution.cvs2(self.alpha)
+        self.results.lcv1, self.results.ucv1 = self.distribution.cvs1(self.alpha)
+        self.results.lcv2, self.results.ucv2 = self.distribution.cvs2(self.alpha)
         
         # report actual type i error rates
-        self.results[self.kTypeIErrorLKey] = self.distribution.p_lower(self.results[self.kLCV1Key]) if self.results[self.kLCV1Key] is not None else 0
-        self.results[self.kTypeIErrorUKey] = self.distribution.p_upper(self.results[self.kUCV1Key]) if self.results[self.kUCV1Key] is not None else 0
-        self.results[self.kTypeIError2Key] = (self.distribution.p_lower(self.results[self.kLCV2Key]) if self.results[self.kLCV2Key] is not None else 0) + (self.distribution.p_upper(self.results[self.kUCV2Key]) if self.results[self.kUCV2Key] is not None else 0)
+        self.results.exact_alpha_lower  = self.distribution.p_lower(self.results.lcv1) if self.results.lcv1 is not None else 0
+        self.results.exact_alpha_upper = self.distribution.p_upper(self.results.ucv1) if self.results.ucv1 is not None else 0
+        self.results.exact_alpha_two = (
+                                        (self.distribution.p_lower(self.results.lcv2) if self.results.lcv2 is not None else 0) + 
+                                        (self.distribution.p_upper(self.results.ucv2) if self.results.ucv2 is not None else 0)
+                                        )
         
         # print results if not in silent mode
-        if not self.is_silent: self.print_test_results()
+        if not self.is_silent: print self.printable_test_results()
 
 class FisherExactTest(ExactTwoSampleTest):
-    """Fisher's exact test, which compares a population of interest to another across a specified category (either group_key or outcome_key)"""
+    """
+    Fisher's exact test, which compares a population of interest to its
+    complement across groups specified by group_key
+    """
     def __init__(self, *args, **kwargs):
         ExactTwoSampleTest.__init__(self, *args, **kwargs)
         self.possible_outcomes = list(set(self.combined_scores))
@@ -208,9 +254,9 @@ class FisherExactTest(ExactTwoSampleTest):
         # create the distribution as usual
         self.create_distribution()
         # manually set some results output to override ordinary statistical test
-        self.results[self.kTestStatKey] = self.distribution.__delta_values[self.groups[self.population_of_interest].count(self.possible_outcomes[0])]
-        self.results[self.kVarianceKey] = abs(self.results[self.kTestStatKey])*(1.0-abs(self.results[self.kTestStatKey])) # TODO: is this right?
-        self.results[self.kStandardDeviationKey] = math.sqrt(self.results[self.kVarianceKey])
+        self.results.test_statistic = self.distribution.__delta_values[self.groups[self.population_of_interest].count(self.possible_outcomes[0])]
+        self.results.var = abs(self.results.test_statistic)*(1.0-abs(self.results.test_statistic)) # TODO: is this right?
+        self.results.std = math.sqrt(self.results.var)
         # perform the test as usual
         self.perform_test()
         # generate a probability table if requested
@@ -227,9 +273,9 @@ class FisherExactTest(ExactTwoSampleTest):
                      lambda x: self.distribution.pmf(x),
                      lambda x: self.distribution.p_lower(self.distribution.__delta_values[x]),
                      lambda x: self.distribution.p_upper(self.distribution.__delta_values[x]),
-                     lambda x: self.isInRejectionRegionSymbol[self.isInRejection2(self.distribution.__delta_values[x])],
-                     lambda x: self.isInRejectionRegionSymbol[self.isInRejectionLow(self.distribution.__delta_values[x])],
-                     lambda x: self.isInRejectionRegionSymbol[self.isInRejectionUpper(self.distribution.__delta_values[x])]
+                     lambda x: self.rejection_region_symbols[self.is_in_rejection_two(self.distribution.__delta_values[x])],
+                     lambda x: self.rejection_region_symbols[self.is_in_rejection_low(self.distribution.__delta_values[x])],
+                     lambda x: self.rejection_region_symbols[self.is_in_rejection_upper(self.distribution.__delta_values[x])]
                      ]
             entries = list()
             for x in range(len(self.distribution.__delta_values)):
@@ -237,12 +283,13 @@ class FisherExactTest(ExactTwoSampleTest):
             self.save_probability_table(headers, entries)
         
     def create_distribution(self):
-        """Create the exact hypergeometric distribution for Fisher's exact test"""
+        """
+        Create the exact hypergeometric distribution for Fisher's exact test
+        """
         # organize the data into a 2x2 contingency table; column 0 is the population of interest
         parameter_scores = self.groups[self.population_of_interest]
         other_scores = self.groups[self.groups.keys()[self.groups.keys().index(self.population_of_interest)-1]]
-        table = [
-                 [parameter_scores.count(self.possible_outcomes[0]), other_scores.count(self.possible_outcomes[0])],
+        table = [[parameter_scores.count(self.possible_outcomes[0]), other_scores.count(self.possible_outcomes[0])],
                  [parameter_scores.count(self.possible_outcomes[1]), other_scores.count(self.possible_outcomes[1])]
                  ]
         row1_sum = sum(table[0])
@@ -263,7 +310,9 @@ class FisherExactTest(ExactTwoSampleTest):
         self.distribution.__delta_lookup
         self.distribution.__expected_value = 0.0
         def cvs1(self, alpha=0.05):
-            """Get (LCV, UCV) for one-tailed tests"""
+            """
+            Get (LCV, UCV) for one-tailed tests
+            """
             i = -1
             while self.cdf(i)+self.pmf(i+1) <= alpha:
                 i += 1
@@ -275,7 +324,9 @@ class FisherExactTest(ExactTwoSampleTest):
             return lcv, ucv
         self.distribution.cvs1 = new.instancemethod(cvs1, self.distribution, self.distribution.__class__)
         def cvs2(self, alpha=0.05):
-            """Get (LCV, UCV) for two-tailed tests"""
+            """
+            Get (LCV, UCV) for two-tailed tests
+            """
             error_scores = list()
             for x in self.__delta_by_abs:
                 if sum([self.pmf(self.__delta_values.index(y)) for y in error_scores]) + sum([self.pmf(self.__delta_values.index(y)) for y in self.__delta_lookup[x]]) >= alpha: break
@@ -288,20 +339,37 @@ class FisherExactTest(ExactTwoSampleTest):
             return lcv, ucv
         self.distribution.cvs2 = new.instancemethod(cvs2, self.distribution, self.distribution.__class__)
         def p_lower(self, outcome):
-            """Return probability of getting a value less than or equal to outcome"""
+            """
+            Return probability of getting a value less than or equal to outcome
+            """
             return sum(self.pmf(i) for i in range(len(self.__delta_values)) if self.__delta_values[i] <= outcome-self.__expected_value)
         self.distribution.p_lower = new.instancemethod(p_lower, self.distribution, self.distribution.__class__)
         def p_upper(self, outcome):
-            """Return probability of getting a value greater than or equal to outcome"""
+            """
+            Return probability of getting a value greater than or equal to
+            outcome
+            """
             return sum(self.pmf(i) for i in range(len(self.__delta_values)) if self.__delta_values[i] >= outcome-self.__expected_value)
         self.distribution.p_upper = new.instancemethod(p_upper, self.distribution, self.distribution.__class__)
         def p_two(self, outcome):
-            """Return probability of getting a value whose distance to the expected value is greater or equal to that of outcome"""
+            """
+            Return probability of getting a value whose distance to the
+            expected value is greater or equal to that of outcome
+            """
             return sum(self.pmf(i) for i in range(len(self.__delta_values)) if abs(self.__delta_values[i]) >= abs(outcome-self.__expected_value))
         self.distribution.p_two = new.instancemethod(p_two, self.distribution, self.distribution.__class__)
+    
+    @classmethod
+    def perform_unit_test(cls, **kwargs):
+        """
+        Perform base implementation, passing arguments for categories
+        """
+        super(FisherExactTest, cls).perform_unit_test(population_of_interest='Jury', **kwargs)
 
 class MoodMedianTest(FisherExactTest):
-    """Mood's median test"""
+    """
+    Mood's median test
+    """
     def __init__(self, *args, **kwargs):
         ExactTwoSampleTest.__init__(self, *args, **kwargs)
         self.validate_numericality()
@@ -343,7 +411,9 @@ class MoodMedianTest(FisherExactTest):
                                  )
 
 class TwoSampleWilcoxonTest(ExactTwoSampleTest):
-    """A two-sample Wilcoxon rank test"""
+    """
+    A two-sample Wilcoxon rank test
+    """
     def __init__(self, *args, **kwargs):
         ExactTwoSampleTest.__init__(self, *args, **kwargs)
         self.validate_numericality()
@@ -363,7 +433,9 @@ class TwoSampleWilcoxonTest(ExactTwoSampleTest):
             self.save_probability_table(headers, entries)
 
 class TwoSampleNormalScoresTest(ExactTwoSampleTest):
-    """A two-sample Van der Waerden normal scores test"""
+    """
+    A two-sample Van der Waerden normal scores test
+    """
     def __init__(self, *args, **kwargs):
         ExactTwoSampleTest.__init__(self, *args, **kwargs)
         self.validate_numericality()

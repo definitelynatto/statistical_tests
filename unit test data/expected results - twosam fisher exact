@@ -1,0 +1,27 @@
+Test Results:
+--------------------------------
+Test Statistic: -0.460526315789
+σ²:             0.248441828255
+σ:              0.49843939276
+
+Two-Tailed Test of Population of Jury = Population of Not Jury
+--------------------------------
+p:              0.00703415905451
+Upper CV:       0.416666666667
+Lower CV:       -0.350877192982
+Actual α:       0.0444704598084
+Decision:       Reject H₀
+
+Lower Tail Test of Population of Jury ≥ Population of Not Jury
+--------------------------------
+p:              0.00632169222107
+Lower CV:       -0.350877192982
+Actual α:       0.034758411921
+Decision:       Reject H₀
+
+Upper Tail Test of Population of Jury ≤ Population of Not Jury
+--------------------------------
+p:              0.999295437596
+Upper CV:       0.416666666667
+Actual α:       0.00971204788743
+Decision:       Fail to Reject H₀

@@ -1,0 +1,27 @@
+Test Results:
+--------------------------------
+Test Statistic: 10
+σ²:             3.5
+σ:              1.87082869339
+
+Two-Tailed Test of Md = 0
+--------------------------------
+p:              0.179565429688
+Upper CV:       12
+Lower CV:       2
+Actual α:       0.012939453125
+Decision:       Fail to Reject H₀
+
+Lower Tail Test of Md ≥ 0
+--------------------------------
+p:              0.971313476562
+Lower CV:       3
+Actual α:       0.0286865234375
+Decision:       Fail to Reject H₀
+
+Upper Tail Test of Md ≤ 0
+--------------------------------
+p:              0.0897827148438
+Upper CV:       11
+Actual α:       0.0286865234375
+Decision:       Fail to Reject H₀

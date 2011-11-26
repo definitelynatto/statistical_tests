@@ -1,0 +1,27 @@
+Test Results:
+--------------------------------
+Test Statistic: -2.48529242248
+σ²:             None
+σ:              None
+
+Two-Tailed Test of M 1 = M Not 1
+--------------------------------
+p:              0.052380952381
+Upper CV:       2.51191777939
+Lower CV:       -2.95531982894
+Actual α:       0.0380952380952
+Decision:       Fail to Reject H₀
+
+Lower Tail Test of M 1 ≥ M Not 1
+--------------------------------
+p:              0.0285714285714
+Lower CV:       -2.18934413875
+Actual α:       0.0380952380952
+Decision:       Reject H₀
+
+Upper Tail Test of M 1 ≤ M Not 1
+--------------------------------
+p:              0.985714285714
+Upper CV:       2.51191777939
+Actual α:       0.0238095238095
+Decision:       Fail to Reject H₀
