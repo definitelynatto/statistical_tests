@@ -145,9 +145,9 @@ class ExactMatchedPairTest(ExactTest):
                 raise KeyError('Unable to locate key %s in file %s.'%(e, self.input_file))
         if not pre or not post:
             raise ValueError('You must supply scores for both pre and post.')
-        if not ExactMatchedPairTest.is_array_like(pre):
+        if not self.__class__.is_array_like(pre):
             raise TypeError('pre must be a list or tuple.')
-        if not ExactMatchedPairTest.is_array_like(post):
+        if not self.__classs__.is_array_like(post):
             raise TypeError('post must be a list or tuple.')
         if pre and post and not (len(pre)==len(post)):
             raise ValueError('pre and post must be sequences of equal length.')

@@ -200,9 +200,9 @@ class ExactTest(StatisticalTest):
         entries to the specified location as a CSV.
         """
         # validate input parameters
-        if not ExactTest.is_array_like(headers):
+        if not self.__class__.is_array_like(headers):
             raise TypeError('Headers must be specified as a list or tuple.')
-        if not ExactTest.is_dict_array_like(entries):
+        if not self.__class__.is_dict_array_like(entries):
             raise TypeError('Entries must be specified as a list or tuple of dictionaries.')
         # create a new csv writer
         try: writer = csv.DictWriter(open(self.output_file, 'w'), headers)
@@ -218,7 +218,7 @@ class ExactTest(StatisticalTest):
     
     def printable_test_results(self):
         """
-        Nicely format the results of a test and print to the console
+        Nicely format the results of a test for console output
         """
         decision = { True:u'Reject H\u2080', False:u'Fail to Reject H\u2080' }
         x = self.results.test_statistic

@@ -169,7 +169,7 @@ class ExactTwoSampleTest(ExactTest):
         for k in groups.keys():
             if not groups[k]:
                 raise ValueError('No scores found for Group: %s.'%k)
-            if not ExactTwoSampleTest.is_array_like(groups[k]):
+            if not self.__class__.is_array_like(groups[k]):
                 raise TypeError('Scores for Group: %s must be a list or tuple.'%k)
             groups[k] = list(groups[k])
         if not population_of_interest: population_of_interest = groups.keys()[0]
