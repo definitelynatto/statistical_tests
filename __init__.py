@@ -204,17 +204,18 @@ class StatisticalTest(object):
         Perform the unit test for the class.
         """
         kwargs.setdefault('is_silent', True)
-        st = cls(
-                 input_file=cls.get_unit_test_input_file_name(),
-                 **kwargs
-                 )
+        kwargs.setdefault('input_file', cls.get_unit_test_results_file_name())
+        st = cls(**kwargs)
         expected = None
-        with codecs.open(cls.get_unit_test_results_file_name(), encoding='utf-8') as f:
+        with codecs.open(cls.get_unit_test_results_file_name(suffix=kwargs.setdefault('suffix', '')), encoding='utf-8') as f:
             expected = f.read()
-        print '%s Printed results: %s'%(cls.__name__,
-                                        ('PASS' if expected == st.printable_test_results()
-                                         else 'FAIL')
-                                        )
+        kwargs.setdefault('test_name', '')
+        print '%s %s Printed results: %s'%(cls.__name__,
+                                           kwargs['test_name'],
+                                           ('PASS' if expected == st.printable_test_results()
+                                            else 'FAIL'
+                                            )
+                                           )
         # return the test instance in case this is called from a subclass that needs to do more with it
         return st
     
@@ -226,14 +227,16 @@ class StatisticalTest(object):
         return os.path.join(os.path.split(__file__)[0], 'unit test data')
     
     @classmethod
-    def get_unit_test_results_file_name(cls):
+    def get_unit_test_results_file_name(cls, suffix=''):
         """
         Get the name for a file containing the expected unit test results
         """
         return os.path.join(
                             cls.get_unit_test_dir(),
-                            'expected results - %s'%
-                            cls.create_output_file_name_from_class_name()
+                            'expected results - %s%s'%(
+                                                       cls.create_output_file_name_from_class_name(),
+                                                       suffix
+                                                       )
                             )
     
     @classmethod

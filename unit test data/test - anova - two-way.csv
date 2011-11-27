@@ -1,0 +1,25 @@
+Deprivation,Drug,Outcome
+1,Control,1
+1,Control,4
+1,Control,0
+1,Control,7
+1,Drug X,13
+1,Drug X,5
+1,Drug X,7
+1,Drug X,15
+1,Drug Y,9
+1,Drug Y,16
+1,Drug Y,18
+1,Drug Y,13
+24,Control,15
+24,Control,6
+24,Control,10
+24,Control,13
+24,Drug X,6
+24,Drug X,18
+24,Drug X,9
+24,Drug X,15
+24,Drug Y,14
+24,Drug Y,7
+24,Drug Y,6
+24,Drug Y,13

@@ -4,8 +4,8 @@ contrary to popular fashion, do not eliminate data in order to increase power,
 and consequently do not inflate Type I error rate. For information on the
 tests, refer to e.g.,
 
-Marascuilo, L. A., & Serlin, R. C. (1987). Statistical Methods for the Social
-    and Behavioral Sciences. New York, New York: W.H. Freeman & Company.
+Marascuilo, L.A., & Serlin, R.C. (1987). Statistical Methods for the Social and
+    Behavioral Sciences. New York, NY: W.H. Freeman & Company.
     
 When selecting a test, consider the following table of relative efficiencies
 for different types of populations:

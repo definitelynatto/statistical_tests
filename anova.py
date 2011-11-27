@@ -1,13 +1,94 @@
 """
 This module contains a variety of tests in the ANOVA family
+
+TODO: support testing without the requirement of a csv file
 """
 
-import csv, itertools, os
+import copy, csv, itertools, os
 from scipy import stats
-from statistical_tests import StatisticalTest
+from numpy.testing import assert_approx_equal
+from statistical_tests import *
+
+class ANOVAConstrastSource(object):
+    """
+    A class to describe a source in an ANOVA contrast
+    """
+    def __init__(self, source_factor, source_level, coefficient):
+        """
+        Initialze a new instance of a constrast source
+        """
+        if not all([
+                    isinstance(source_factor, str),
+                    isinstance(source_level, str)
+                    ]):
+            raise Exception('source_factor and source_level must be strings')
+        if not StatisticalTest.is_numeric(coefficient):
+            raise Exception('Contrast coefficient must be a number')
+        self.source_factor = source_factor
+        self.source_level = source_level
+        self.coefficient = coefficient
+    
+class ANOVAConstrast(object):
+    """
+    A class for storing a constrast definition
+    """
+    def __init__(self, *args):
+        """
+        Initialize a new instance of a contrast definition
+        """
+        # TODO: ensure there are no overlapping sources
+        if not all([isinstance(x, ANOVAConstrastSource) for x in args]):
+            raise Exception('All arguments must be of type ANOVAContrastSource')
+        self.sources = args
+        if not self.is_valid():
+            raise Exception('All contrast coefficients must sum to 0')
+    
+    def is_valid(self):
+        """
+        Return True if coefficients sum to 0; else False
+        """
+        try:
+            assert_approx_equal(
+                                sum(source.coefficient for source in self.sources),
+                                0
+                                )
+            return True
+        except: return False
+    
+    def is_orthogonal_to(self, other):
+        """
+        Return True if orthogonal to other; else False
+        """
+        # TODO: implement it
+        return False
+    
+    @classmethod
+    def are_orthogonal(cls, c1, c2):
+        """
+        Return True if c1 and c2 are orthogonal; else False
+        """
+        return c1.is_orthogonal_to(c2)
+
+class ANOVAResults(StatisticalTestResults):
+    """
+    A class for storing the results of an analysis of variance
+    """
+    ## the name for the variability source
+    source_name = None
+    ## the marginal mean associated with the source
+    mean = None
+    ## the sum of squares for the source
+    ss = None
+    ## the degrees of freedom for the source
+    df = None
+    ## the mean squared for the source
+    ms = None
 
 class ANOVA(StatisticalTest):
-    """An analysis of variance on any number of terms, assuming a balanced design."""
+    """
+    An analysis of variance on any number of terms, assuming a balanced design.
+    """
+    '''
     ## key for storing the grand mean in the test results
     kGrandMeanKey = 'grand mean'
     ## key for storing the degrees of freedom in the test results
@@ -24,14 +105,17 @@ class ANOVA(StatisticalTest):
     kContrastsKey = 'contrasts'
     ## key for storing names of contrast factors
     kContrastFactorNames = 'contrast factors'
+    '''
     def __init__(
                  self,
                  factor_keys=['Group'], # keys for columns specifying factors of interest
                  outcome_key='Outcome', # key for column specifying the outcome variable
-                 contrasts=[],          # a list of ???
+                 contrasts=(),          # an array_like of ANOVAContrast definitions
                  *args,
-                 **kwargs):
+                 **kwargs
+                 ):
         StatisticalTest.__init__(self, *args, **kwargs)
+        self.results = list() # a list of ANOVAResults
         if not self.input_file and not os.path.isfile(self.input_file):
             raise ValueError('You must specify an input csv file')
         if not isinstance(factor_keys, list) and not isinstance(factor_keys, tuple):
@@ -65,34 +149,39 @@ class ANOVA(StatisticalTest):
         if self.n != self.n_per_condition*self.num_conditions:
             raise ValueError('Design must be balanced (fully crossed with equal number of subjects per condition).')
         # ensure all contrasts are valid
-        if not isinstance(contrasts, list) and not isinstance(contrasts, tuple):
-            raise TypeError('contrasts must be specified as a list or tuple of dictionaries')
-        # TODO: ensure contrast coefficients sum to 0
-        # TODO: store contrasts as data attribute
+        if contrasts:
+            if not ANOVA.is_array_like(constrasts) and all([isinstance(x, ANOVAConstrast) for x in constrasts]):
+                raise TypeError('contrasts must be specified as a list or tuple of ANOVAContrast definitions.')
+            # ensure all contrasts are valid
+            if not all([x.is_valid() for x in constrasts]):
+                raise ValueError('One or more contrast definitions are invalid. All coefficients must sum to 0.')
+        # store contrasts as a data attribute
+        self.contrasts = contrasts
         
         # perform the test
         self.perform_test()
     
     def __create_new_source_for_results(self, name):
-        """Create a new source of data for the results given the specified name"""
-        return {
-                self.kSourceName:name,
-                self.kSSKey:None,
-                self.kDFKey:None,
-                self.kMSKey:None,
-                self.kTestStatKey:None,
-                self.kP2Key:None,
-                self.kEffectSizeKey:None,
-                self.kPartialEffectSizeKey:None
-                }
+        """
+        Create a new source of data for the results given the specified name
+        """
+        results = ANOVAResults()
+        results.source_name = name
+        return results
     
     def get_marginal_mean(self, **kwargs):
-        """Get the marginal mean of a subset of the data, supplied as factor:level arguments"""
+        """
+        Get the marginal mean of a subset of the data, supplied as factor:level
+        arguments
+        """
         try: return stats.tmean([d[self.outcome_key] for d in self.data if all([d[k]==kwargs[k] for k in kwargs])])
         except: raise TypeError('You must specify at least one factor with a list containing at least one level.')
     
     def __get_mean_bracket_term(self, combination):
-        """Get the bracket term corresponding to the supplied combination of factor keys"""
+        """
+        Get the bracket term corresponding to the supplied combination of
+        factor keys
+        """
         return (
                 self.n_per_condition * 
                 reduce(lambda x,y:x*y, [len(self.factor_levels[f]) for f in self.factor_keys if not f in combination]+[1]) * 
@@ -100,7 +189,9 @@ class ANOVA(StatisticalTest):
                 )
     
     def perform_test(self):
-        """Perform requested tests"""
+        """
+        Perform requested tests
+        """
         # store some stuff for reuse
         combined_sample = [d[self.outcome_key] for d in self.data]
         grand_mean = stats.tmean(combined_sample)
@@ -112,7 +203,7 @@ class ANOVA(StatisticalTest):
         ms_error = ss_error / df_error
         
         # store each main effect and interaction as a dictionary in a list
-        self.results[self.kMainEffectsKey] = list()
+        self.results = list()
         bracket_terms = dict()
         for i in range(len(self.factor_keys)):
             combinations = itertools.combinations(self.factor_keys, i+1)
@@ -123,43 +214,48 @@ class ANOVA(StatisticalTest):
                                 sum([bracket_terms[b]*(1 if len(b)%2==len(combination)%2 else -1) for b in bracket_terms.keys() if len(b) < len(combination) and all([t in combination for t in b])]) +
                                 sum_of_grand_mean_squared*(1 if len(combination)%2==0 else -1)
                                 )
-                self.results[self.kMainEffectsKey].append(self.__create_new_source_for_results('x'.join(combination)))
-                self.results[self.kMainEffectsKey][-1][self.kSSKey] = ss_explained
-                self.results[self.kMainEffectsKey][-1][self.kDFKey] = reduce(lambda x, y: x*y, [len(self.factor_levels[f])-1.0 for f in combination])
-                self.results[self.kMainEffectsKey][-1][self.kMSKey] = self.results[self.kMainEffectsKey][-1][self.kSSKey] / self.results[self.kMainEffectsKey][-1][self.kDFKey]
-                self.results[self.kMainEffectsKey][-1][self.kTestStatKey] = self.results[self.kMainEffectsKey][-1][self.kMSKey] / ms_error
-                self.results[self.kMainEffectsKey][-1][self.kP2Key] = stats.f.sf(self.results[self.kMainEffectsKey][-1][self.kTestStatKey], self.results[self.kMainEffectsKey][-1][self.kDFKey], df_error)
-                self.results[self.kMainEffectsKey][-1][self.kEffectSizeKey] = 0.0 # TODO
-                self.results[self.kMainEffectsKey][-1][self.kPartialEffectSizeKey] = ANOVA.estimate_partial_effect_size(self.results[self.kMainEffectsKey][-1][self.kTestStatKey], self.results[self.kMainEffectsKey][-1][self.kDFKey], self.n)
+                self.results.append(self.__create_new_source_for_results('x'.join(combination)))
+                r = ANOVAResults
+                
+                self.results[-1].ss = ss_explained
+                self.results[-1].df = reduce(lambda x, y: x*y, [len(self.factor_levels[f])-1.0 for f in combination])
+                self.results[-1].ms = self.results[-1].ss / self.results[-1].df
+                self.results[-1].test_statistic = self.results[-1].ms / ms_error
+                self.results[-1].p_two = stats.f.sf(self.results[-1].test_statistic, self.results[-1].df, df_error)
+                self.results[-1].effect_size = 0.0 # TODO
+                self.results[-1].partial_effect_size = ANOVA.estimate_partial_effect_size(self.results[-1].test_statistic, self.results[-1].df, self.n)
         # fill in complete effects
-        f_df_pairs = [(effect[self.kTestStatKey], effect[self.kDFKey]) for effect in self.results[self.kMainEffectsKey]]
-        for i in range(len(self.results[self.kMainEffectsKey])):
-            self.results[self.kMainEffectsKey][i][self.kEffectSizeKey] = ANOVA.estimate_complete_effect_size(
-                                                                                                             self.results[self.kMainEffectsKey][i][self.kTestStatKey],
-                                                                                                             self.results[self.kMainEffectsKey][i][self.kDFKey],
-                                                                                                             self.n,
-                                                                                                             *f_df_pairs
-                                                                                                             )
+        f_df_pairs = [(effect.test_statistic, effect.df) for effect in self.results]
+        for i in range(len(self.results)):
+            self.results[i].effect_size = ANOVA.estimate_complete_effect_size(
+                                                                              self.results[i].test_statistic,
+                                                                              self.results[i].df,
+                                                                              self.n,
+                                                                              *f_df_pairs
+                                                                              )
         # add entry for error
-        self.results[self.kMainEffectsKey].append(self.__create_new_source_for_results('Error'))
-        self.results[self.kMainEffectsKey][-1][self.kSSKey] = ss_error
-        self.results[self.kMainEffectsKey][-1][self.kDFKey] = df_error
-        self.results[self.kMainEffectsKey][-1][self.kMSKey] = ms_error
+        self.results.append(self.__create_new_source_for_results('Error'))
+        self.results[-1].ss = ss_error
+        self.results[-1].df = df_error
+        self.results[-1].ms = ms_error
         # add entry for total
-        self.results[self.kMainEffectsKey].append(self.__create_new_source_for_results('Total'))
-        self.results[self.kMainEffectsKey][-1][self.kSSKey] = self.ss_total(grand_mean, combined_sample)
-        self.results[self.kMainEffectsKey][-1][self.kDFKey] = float(self.n-1)
+        self.results.append(self.__create_new_source_for_results('Total'))
+        self.results[-1].ss = self.ss_total(grand_mean, combined_sample)
+        self.results[-1].df = float(self.n-1)
         
-        # store each contrast as a dictionary in a list
-        self.results[self.kContrastsKey] = list()
-        # TODO
+        # TODO: simple effects
+        # TODO: contrasts
         
         # print results if not in silent mode
-        if not self.is_silent: self.print_test_results()
+        if not self.is_silent: print self.printable_test_results()
     
     @classmethod
     def estimate_contrast_complete_effect(cls, f_psi, f_omnibus, num_groups, group_size):
-        """Estimate the complete effect size for a contrast, or the proportion of total variability that the contrast captures, assuming a balanced design"""
+        """
+        Estimate the complete effect size for a contrast, or the proportion of
+        total variability that the contrast captures, assuming a balanced
+        design
+        """
         if not isinstance(f_psi, float) and not isinstance(f_psi, int):
             raise TypeError('F for contrast must be a decimal number')
         if not isinstance(f_omnibus, float) and not isinstance(f_omnibus, int):
@@ -172,7 +268,11 @@ class ANOVA(StatisticalTest):
     
     @classmethod
     def estimate_contrast_partial_effect(cls, f_psi, group_size):
-        """Estimate the partial effect size for a contrast, or the variability of the contrast relative to itself and the error, assuming a balanced design"""
+        """
+        Estimate the partial effect size for a contrast, or the variability of
+        the contrast relative to itself and the error, assuming a balanced
+        design
+        """
         if not isinstance(f_psi, float) and not isinstance(f_psi, int):
             raise TypeError('F for contrast must be a decimal number')
         if not isinstance(group_size, int):
@@ -182,7 +282,10 @@ class ANOVA(StatisticalTest):
     
     @classmethod
     def estimate_partial_effect_size(cls, f, df, n):
-        """Estimate the partial effect size of an effect based on its f, df, and total sample size"""
+        """
+        Estimate the partial effect size of an effect based on its f, df, and
+        total sample size
+        """
         if not isinstance(f, float) and not isinstance(f, int):
             raise TypeError('F statistic must be a decimal number')
         if not isinstance(df, float) and not isinstance(df, int):
@@ -193,7 +296,10 @@ class ANOVA(StatisticalTest):
     
     @classmethod
     def estimate_complete_effect_size(cls, f, df, n, *args):
-        """Estimate the complete effect size of an effect based on its f, df, total sample size, and iterables of (F, df) for all effects"""
+        """
+        Estimate the complete effect size of an effect based on its f, df,
+        total sample size, and iterables of (F, df) for all effects
+        """
         if not isinstance(f, float) and not isinstance(f, int):
             raise TypeError('F statistic must be a decimal number')
         if not isinstance(df, float) and not isinstance(df, int):
@@ -204,24 +310,27 @@ class ANOVA(StatisticalTest):
             raise ValueError('You must supply a variable-length positional argument list containing pairs of (F, df) for all effects')
         return (df*(f-1)) / float(sum((x[1]*(x[0]-1)) for x in args)+n)
     
-    def print_test_results(self):
-        """Nicely format the results of a test and print to the console"""
+    def printable_test_results(self):
+        """
+        Nicely format the results of a test for console output
+        """
         col_wid = 16
         summary = u'Main Effects and Interactions:\n' + \
             u'---------------------------------------------------------------------------------------------------------------------------------------\n' + \
             u'Source                         SS               df               MS                F                p       partial \u03c9\u00b2      complete \u03c9\u00b2\n' + \
             u'---------------- ---------------- ---------------- ---------------- ---------------- ---------------- ---------------- ----------------'
-        for r in self.results[self.kMainEffectsKey]:
+        for r in self.results:
             summary += u'\n%s %s %s %s %s %s %s %s'%(
-                                                     str(r[self.kSourceName][:col_wid-1]).ljust(col_wid),
-                                                     str('%.5f'%r[self.kSSKey] if r[self.kSSKey] is not None else '').rjust(col_wid),
-                                                     str('%.5f'%r[self.kDFKey] if r[self.kDFKey] is not None else '').rjust(col_wid),
-                                                     str('%.5f'%r[self.kMSKey] if r[self.kMSKey] is not None else '').rjust(col_wid),
-                                                     str('%.5f'%r[self.kTestStatKey] if r[self.kTestStatKey] is not None else '').rjust(col_wid),
-                                                     str('%.5f'%r[self.kP2Key] if r[self.kP2Key] is not None else '').rjust(col_wid),
-                                                     str('%.5f'%r[self.kPartialEffectSizeKey] if r[self.kPartialEffectSizeKey] is not None else '').rjust(col_wid),
-                                                     str('%.5f'%r[self.kEffectSizeKey] if r[self.kEffectSizeKey] is not None else '').rjust(col_wid)
+                                                     str(r.source_name[:col_wid-1]).ljust(col_wid),
+                                                     str('%.5f'%r.ss if r.ss is not None else '').rjust(col_wid),
+                                                     str('%.5f'%r.df if r.df is not None else '').rjust(col_wid),
+                                                     str('%.5f'%r.ms if r.ms is not None else '').rjust(col_wid),
+                                                     str('%.5f'%r.test_statistic if r.test_statistic is not None else '').rjust(col_wid),
+                                                     str('%.5f'%r.p_two if r.p_two is not None else '').rjust(col_wid),
+                                                     str('%.5f'%r.partial_effect_size if r.partial_effect_size is not None else '').rjust(col_wid),
+                                                     str('%.5f'%r.effect_size if r.effect_size is not None else '').rjust(col_wid)
                                                      )
+        '''
         if self.results[self.kContrastsKey]:
             summary += u'Contrasts:\n' + \
             u'---------------------------------------------------------------------------------------------------------------------------------------\n' + \
@@ -238,7 +347,32 @@ class ANOVA(StatisticalTest):
                                                          str('%.5f'%r[self.kPartialEffectSizeKey] if r[self.kPartialEffectSizeKey] is not None else '').rjust(col_wid),
                                                          str('%.5f'%r[self.kEffectSizeKey] if r[self.kEffectSizeKey] is not None else '').rjust(col_wid)
                                                          )
-        print summary
+        '''
+        return summary.rstrip()
+    
+    @classmethod
+    def perform_unit_test(cls, **kwargs):
+        """
+        Perform unit tests for different conditions. Most data are from:
+        Keppel, G. & Wickens, T.D. (2004). Design and Analysis: A Researcher's
+            Handbook, 4th ed. Pearson Prentice Hall: Upper Saddle River, NJ.
+        """
+        results = list()
+        kwargs['test_name'] = 'One-Way'
+        kwargs['input_file'] = '%s - one-way.csv'%cls.get_unit_test_input_file_name()[:-4]
+        kwargs['suffix'] = ' - one-way'
+        results.append(super(ANOVA, cls).perform_unit_test(**kwargs))
+        kwargs['test_name'] = 'Two-Way'
+        kwargs['input_file'] = '%s - two-way.csv'%cls.get_unit_test_input_file_name()[:-4]
+        kwargs['suffix'] = ' - two-way'
+        kwargs['factor_keys'] = ['Drug', 'Deprivation']
+        results.append(super(ANOVA, cls).perform_unit_test(**kwargs))
+        kwargs['test_name'] = 'Three-Way'
+        kwargs['input_file'] = '%s - three-way.csv'%cls.get_unit_test_input_file_name()[:-4]
+        kwargs['suffix'] = ' - three-way'
+        kwargs['factor_keys'] = ['Feedback', 'Word Type', 'Grade']
+        results.append(super(ANOVA, cls).perform_unit_test(**kwargs))
+        return results
 
 '''
 kGrandMean = 'Grand Mean'

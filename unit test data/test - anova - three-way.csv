@@ -1,0 +1,91 @@
+Grade,Word Type,Feedback,Outcome
+Fifth grade,"Low Freq, Low Emotion",None,7
+Fifth grade,"Low Freq, Low Emotion",None,7
+Fifth grade,"Low Freq, Low Emotion",None,9
+Fifth grade,"Low Freq, Low Emotion",None,10
+Fifth grade,"Low Freq, Low Emotion",None,9
+Fifth grade,"Low Freq, Low Emotion",Positive,6
+Fifth grade,"Low Freq, Low Emotion",Positive,8
+Fifth grade,"Low Freq, Low Emotion",Positive,7
+Fifth grade,"Low Freq, Low Emotion",Positive,9
+Fifth grade,"Low Freq, Low Emotion",Positive,9
+Fifth grade,"Low Freq, Low Emotion",Negative,10
+Fifth grade,"Low Freq, Low Emotion",Negative,8
+Fifth grade,"Low Freq, Low Emotion",Negative,8
+Fifth grade,"Low Freq, Low Emotion",Negative,6
+Fifth grade,"Low Freq, Low Emotion",Negative,8
+Fifth grade,"High Freq, Low Emotion",None,7
+Fifth grade,"High Freq, Low Emotion",None,8
+Fifth grade,"High Freq, Low Emotion",None,9
+Fifth grade,"High Freq, Low Emotion",None,10
+Fifth grade,"High Freq, Low Emotion",None,10
+Fifth grade,"High Freq, Low Emotion",Positive,6
+Fifth grade,"High Freq, Low Emotion",Positive,8
+Fifth grade,"High Freq, Low Emotion",Positive,8
+Fifth grade,"High Freq, Low Emotion",Positive,9
+Fifth grade,"High Freq, Low Emotion",Positive,9
+Fifth grade,"High Freq, Low Emotion",Negative,7
+Fifth grade,"High Freq, Low Emotion",Negative,7
+Fifth grade,"High Freq, Low Emotion",Negative,6
+Fifth grade,"High Freq, Low Emotion",Negative,9
+Fifth grade,"High Freq, Low Emotion",Negative,9
+Fifth grade,"High Freq, High Emotion",None,7
+Fifth grade,"High Freq, High Emotion",None,7
+Fifth grade,"High Freq, High Emotion",None,10
+Fifth grade,"High Freq, High Emotion",None,7
+Fifth grade,"High Freq, High Emotion",None,9
+Fifth grade,"High Freq, High Emotion",Positive,3
+Fifth grade,"High Freq, High Emotion",Positive,5
+Fifth grade,"High Freq, High Emotion",Positive,3
+Fifth grade,"High Freq, High Emotion",Positive,6
+Fifth grade,"High Freq, High Emotion",Positive,5
+Fifth grade,"High Freq, High Emotion",Negative,2
+Fifth grade,"High Freq, High Emotion",Negative,3
+Fifth grade,"High Freq, High Emotion",Negative,4
+Fifth grade,"High Freq, High Emotion",Negative,5
+Fifth grade,"High Freq, High Emotion",Negative,5
+Seniors,"Low Freq, Low Emotion",None,10
+Seniors,"Low Freq, Low Emotion",None,8
+Seniors,"Low Freq, Low Emotion",None,9
+Seniors,"Low Freq, Low Emotion",None,7
+Seniors,"Low Freq, Low Emotion",None,8
+Seniors,"Low Freq, Low Emotion",Positive,6
+Seniors,"Low Freq, Low Emotion",Positive,9
+Seniors,"Low Freq, Low Emotion",Positive,8
+Seniors,"Low Freq, Low Emotion",Positive,7
+Seniors,"Low Freq, Low Emotion",Positive,10
+Seniors,"Low Freq, Low Emotion",Negative,9
+Seniors,"Low Freq, Low Emotion",Negative,10
+Seniors,"Low Freq, Low Emotion",Negative,7
+Seniors,"Low Freq, Low Emotion",Negative,7
+Seniors,"Low Freq, Low Emotion",Negative,9
+Seniors,"High Freq, Low Emotion",None,7
+Seniors,"High Freq, Low Emotion",None,8
+Seniors,"High Freq, Low Emotion",None,9
+Seniors,"High Freq, Low Emotion",None,9
+Seniors,"High Freq, Low Emotion",None,11
+Seniors,"High Freq, Low Emotion",Positive,6
+Seniors,"High Freq, Low Emotion",Positive,7
+Seniors,"High Freq, Low Emotion",Positive,9
+Seniors,"High Freq, Low Emotion",Positive,9
+Seniors,"High Freq, Low Emotion",Positive,10
+Seniors,"High Freq, Low Emotion",Negative,8
+Seniors,"High Freq, Low Emotion",Negative,8
+Seniors,"High Freq, Low Emotion",Negative,6
+Seniors,"High Freq, Low Emotion",Negative,9
+Seniors,"High Freq, Low Emotion",Negative,9
+Seniors,"High Freq, High Emotion",None,6
+Seniors,"High Freq, High Emotion",None,7
+Seniors,"High Freq, High Emotion",None,8
+Seniors,"High Freq, High Emotion",None,9
+Seniors,"High Freq, High Emotion",None,9
+Seniors,"High Freq, High Emotion",Positive,6
+Seniors,"High Freq, High Emotion",Positive,8
+Seniors,"High Freq, High Emotion",Positive,6
+Seniors,"High Freq, High Emotion",Positive,9
+Seniors,"High Freq, High Emotion",Positive,8
+Seniors,"High Freq, High Emotion",Negative,6
+Seniors,"High Freq, High Emotion",Negative,5
+Seniors,"High Freq, High Emotion",Negative,7
+Seniors,"High Freq, High Emotion",Negative,8
+Seniors,"High Freq, High Emotion",Negative,9
