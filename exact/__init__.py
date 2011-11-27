@@ -6,6 +6,9 @@ tests, refer to e.g.,
 
 Marascuilo, L.A., & Serlin, R.C. (1987). Statistical Methods for the Social and
     Behavioral Sciences. New York, NY: W.H. Freeman & Company.
+Marascuilo, L.A., & McSweeney, M. (1977). Nonparametric and Distribution-Free
+    Methods for the Social Sciences. Monterey, California: Brooks/Cole
+    Publishing Co.
     
 When selecting a test, consider the following table of relative efficiencies
 for different types of populations:
@@ -263,8 +266,9 @@ class ExactTest(StatisticalTest):
     @classmethod
     def perform_unit_test(cls, auto_delete=True, **kwargs):
         """
-        Perform the base implementation and then confirm probability table
-        Data comes from Marascuilo & Serlin (1987) unless otherwise specified
+        Perform the base implementation and then confirm probability table.
+        Data comes from Marascuilo & Serlin (1987) and Marascuilo & McSweeney
+        (1977).
         """
         test_probability_table = os.path.join(
                                               os.getenv('HOME'),
