@@ -5,4 +5,6 @@ distributing tools to properly conduct tests performed incorrectly in many
 commercial statistical software packages such as SPSS. It is still a work in
 progress, but I will add more useful documentation over time.
 
-Note that this module requires that you have installed the scipy.stats module.
+Note that this module requires that you have installed the scipy.stats module
+and the numpy.testing module. This module is currently being developed in
+Python 2.6, so there are no guarantees about compatability elsewhere yet.
