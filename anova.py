@@ -310,26 +310,54 @@ class ANOVA(StatisticalTest):
             raise ValueError('You must supply a variable-length positional argument list containing pairs of (F, df) for all effects')
         return (df*(f-1)) / float(sum((x[1]*(x[0]-1)) for x in args)+n)
     
+    ## column width of the output table
+    output_table_col_wid = 16
+    
     def printable_test_results(self):
         """
         Nicely format the results of a test for console output
         """
-        col_wid = 16
+        # ordered sequence of header names
+        headers = ('Source',
+                   'SS',
+                   'df',
+                   'MS',
+                   'F',
+                   'p',
+                   u'partial \u03c9\u00b2',
+                   u'complete \u03c9\u00b2'
+                   )
+        # map of header names to attribute names
+        am = {headers[0]:'source_name',
+              headers[1]:'ss',
+              headers[2]:'df',
+              headers[3]:'ms',
+              headers[4]:'test_statistic',
+              headers[5]:'p_two',
+              headers[6]:'partial_effect_size',
+              headers[7]:'effect_size'
+              }
+        # number of columns
+        nc = len(headers)
+        # shorthand internal name for column width
+        cw = self.output_table_col_wid
+        # create headers and bars
         summary = u'Main Effects and Interactions:\n' + \
-            u'---------------------------------------------------------------------------------------------------------------------------------------\n' + \
-            u'Source                         SS               df               MS                F                p       partial \u03c9\u00b2      complete \u03c9\u00b2\n' + \
-            u'---------------- ---------------- ---------------- ---------------- ---------------- ---------------- ---------------- ----------------'
+            (u'{bar:-<%i}\n'%(nc*(cw+1)-1)).format(bar='') + \
+            (
+             (u'{header:<%i}'%cw).format(header=headers[0]) +
+             u''.join([(u' {header:>%i}'%cw).format(header=h) for h in headers[1:]]) +
+             '\n'
+             ) + \
+            u' '.join([(u'{bar:-<%i}'%cw).format(bar='')]*nc)
+        # append results for each source
         for r in self.results:
-            summary += u'\n%s %s %s %s %s %s %s %s'%(
-                                                     str(r.source_name[:col_wid-1]).ljust(col_wid),
-                                                     str('%.5f'%r.ss if r.ss is not None else '').rjust(col_wid),
-                                                     str('%.5f'%r.df if r.df is not None else '').rjust(col_wid),
-                                                     str('%.5f'%r.ms if r.ms is not None else '').rjust(col_wid),
-                                                     str('%.5f'%r.test_statistic if r.test_statistic is not None else '').rjust(col_wid),
-                                                     str('%.5f'%r.p_two if r.p_two is not None else '').rjust(col_wid),
-                                                     str('%.5f'%r.partial_effect_size if r.partial_effect_size is not None else '').rjust(col_wid),
-                                                     str('%.5f'%r.effect_size if r.effect_size is not None else '').rjust(col_wid)
-                                                     )
+            summary += u'\n%s %s'%((u'{name:<%i}'%cw).format(name=getattr(r, am[headers[0]]))[:cw],
+                                    u' '.join([
+                                               (u'%.5f'%getattr(r, am[headers[i]]))[:cw].rjust(cw) if getattr(r, am[headers[i]]) is not None else ''
+                                               for i in range(1,len(headers))
+                                               ]).rstrip()
+                                    )
         '''
         if self.results[self.kContrastsKey]:
             summary += u'Contrasts:\n' + \

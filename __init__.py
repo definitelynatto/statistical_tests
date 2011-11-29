@@ -6,20 +6,6 @@ for performing statistical tests
 import codecs, os
 from itertools import chain
 from scipy import stats
-import exact
-import anova
-
-def __unit_test_all():
-    """
-    Automated unit test for all statistical tests in the package
-    """
-    exact.matched_pair.MatchedPairNormalScoresTest.perform_unit_test()
-    exact.matched_pair.MatchedPairWilcoxonTest.perform_unit_test()
-    exact.matched_pair.SignTest.perform_unit_test()
-    exact.two_sample.FisherExactTest.perform_unit_test()
-    exact.two_sample.MoodMedianTest.perform_unit_test()
-    exact.two_sample.TwoSampleNormalScoresTest.perform_unit_test()
-    exact.two_sample.TwoSampleWilcoxonTest.perform_unit_test()
 
 class StatisticalTestResults(object):
     """
@@ -319,3 +305,18 @@ class MultipleComparisons(object):
         if not num_subjects > 0:
             raise ValueError('There must be at least 1 (ideally many more) subjects')
         return (num_levels-1)*stats.f.ppf(1.0-alpha)
+
+import exact
+import anova
+
+def __unit_test_all():
+    """
+    Automated unit test for all statistical tests in the package
+    """
+    exact.matched_pair.MatchedPairNormalScoresTest.perform_unit_test()
+    exact.matched_pair.MatchedPairWilcoxonTest.perform_unit_test()
+    exact.matched_pair.SignTest.perform_unit_test()
+    exact.two_sample.FisherExactTest.perform_unit_test()
+    exact.two_sample.MoodMedianTest.perform_unit_test()
+    exact.two_sample.TwoSampleNormalScoresTest.perform_unit_test()
+    exact.two_sample.TwoSampleWilcoxonTest.perform_unit_test()
