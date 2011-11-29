@@ -88,24 +88,6 @@ class ANOVA(StatisticalTest):
     """
     An analysis of variance on any number of terms, assuming a balanced design.
     """
-    '''
-    ## key for storing the grand mean in the test results
-    kGrandMeanKey = 'grand mean'
-    ## key for storing the degrees of freedom in the test results
-    kDFKey = 'df'
-    ## key for storing the sum of squares in the test results
-    kSSKey = 'ss'
-    ## key for storing the mean square in the test results
-    kMSKey = 'ms'
-    ## key for storing the source of data in the test results
-    kSourceName = 'source name'
-    ## key for storing main effect test results
-    kMainEffectsKey = 'main effects'
-    ## key for storing contrast results
-    kContrastsKey = 'contrasts'
-    ## key for storing names of contrast factors
-    kContrastFactorNames = 'contrast factors'
-    '''
     def __init__(
                  self,
                  factor_keys=['Group'], # keys for columns specifying factors of interest
@@ -157,6 +139,7 @@ class ANOVA(StatisticalTest):
                 raise ValueError('One or more contrast definitions are invalid. All coefficients must sum to 0.')
         # store contrasts as a data attribute
         self.contrasts = contrasts
+        self.contrast_results = [ANOVAResults()]*len(contrasts)
         
         # perform the test
         self.perform_test()
@@ -318,38 +301,29 @@ class ANOVA(StatisticalTest):
         Nicely format the results of a test for console output
         """
         # ordered sequence of header names
-        headers = ('Source',
-                   'SS',
-                   'df',
-                   'MS',
-                   'F',
-                   'p',
-                   u'partial \u03c9\u00b2',
-                   u'complete \u03c9\u00b2'
+        headers = ('Source', 'SS', 'df', 'MS', 'F', 'p',
+                   u'partial \u03c9\u00b2', u'complete \u03c9\u00b2'
                    )
         # map of header names to attribute names
-        am = {headers[0]:'source_name',
-              headers[1]:'ss',
-              headers[2]:'df',
-              headers[3]:'ms',
-              headers[4]:'test_statistic',
-              headers[5]:'p_two',
-              headers[6]:'partial_effect_size',
-              headers[7]:'effect_size'
+        am = {headers[0]:'source_name', headers[1]:'ss', headers[2]:'df',
+              headers[3]:'ms', headers[4]:'test_statistic', headers[5]:'p_two',
+              headers[6]:'partial_effect_size', headers[7]:'effect_size'
               }
         # number of columns
         nc = len(headers)
         # shorthand internal name for column width
         cw = self.output_table_col_wid
         # create headers and bars
-        summary = u'Main Effects and Interactions:\n' + \
-            (u'{bar:-<%i}\n'%(nc*(cw+1)-1)).format(bar='') + \
-            (
-             (u'{header:<%i}'%cw).format(header=headers[0]) +
-             u''.join([(u' {header:>%i}'%cw).format(header=h) for h in headers[1:]]) +
-             '\n'
-             ) + \
-            u' '.join([(u'{bar:-<%i}'%cw).format(bar='')]*nc)
+        def create_header_bars(title=None):
+            return unicode('%s\n'%title +
+                           (u'{bar:-<%i}\n'%(nc*(cw+1)-1)).format(bar='') +
+                           ((u'{header:<%i}'%cw).format(header=headers[0]) +
+                            u''.join([(u' {header:>%i}'%cw).format(header=h) for h in headers[1:]]) +
+                            '\n'
+                            ) +
+                           u' '.join([(u'{bar:-<%i}'%cw).format(bar='')]*nc)
+                           )
+        summary = create_header_bars('Main Effects and Interactions:')
         # append results for each source
         for r in self.results:
             summary += u'\n%s %s'%((u'{name:<%i}'%cw).format(name=getattr(r, am[headers[0]]))[:cw],
@@ -358,24 +332,15 @@ class ANOVA(StatisticalTest):
                                                for i in range(1,len(headers))
                                                ]).rstrip()
                                     )
-        '''
-        if self.results[self.kContrastsKey]:
-            summary += u'Contrasts:\n' + \
-            u'---------------------------------------------------------------------------------------------------------------------------------------\n' + \
-            u'Source                         SS               df               MS                F                p       partial \u03c9\u00b2      complete \u03c9\u00b2\n' + \
-            u'---------------- ---------------- ---------------- ---------------- ---------------- ---------------- ---------------- ----------------'
-            for r in self.results[self.kContrastsKey]:
-                summary += u'\n%s %s %s %s %s %s %s %s'%(
-                                                         str(r[self.kSourceName][:col_wid-1]).ljust(col_wid),
-                                                         str('%.5f'%r[self.kSSKey] if r[self.kSSKey] is not None else '').rjust(col_wid),
-                                                         str('%.5f'%r[self.kDFKey] if r[self.kDFKey] is not None else '').rjust(col_wid),
-                                                         str('%.5f'%r[self.kMSKey] if r[self.kMSKey] is not None else '').rjust(col_wid),
-                                                         str('%.5f'%r[self.kTestStatKey] if r[self.kTestStatKey] is not None else '').rjust(col_wid),
-                                                         str('%.5f'%r[self.kP2Key] if r[self.kP2Key] is not None else '').rjust(col_wid),
-                                                         str('%.5f'%r[self.kPartialEffectSizeKey] if r[self.kPartialEffectSizeKey] is not None else '').rjust(col_wid),
-                                                         str('%.5f'%r[self.kEffectSizeKey] if r[self.kEffectSizeKey] is not None else '').rjust(col_wid)
-                                                         )
-        '''
+        if self.contrast_results:
+            summary += create_header_bars('Contrasts:')
+            for r in self.contrast_results:
+                summary += u'\n%s %s'%((u'{name:<%i}'%cw).format(name=getattr(r, am[headers[0]]))[:cw],
+                                    u' '.join([
+                                               (u'%.5f'%getattr(r, am[headers[i]]))[:cw].rjust(cw) if getattr(r, am[headers[i]]) is not None else ''
+                                               for i in range(1,len(headers))
+                                               ]).rstrip()
+                                    )
         return summary.rstrip()
     
     @classmethod
@@ -403,27 +368,6 @@ class ANOVA(StatisticalTest):
         return results
 
 '''
-kGrandMean = 'Grand Mean'
-kDFWithin = 'dfWithin'
-kDFBetween = 'dfBetween'
-kDFTotal = 'dfTotal'
-kSSWithin = 'SSWithin'
-kSSBetween = 'SSBetween'
-kSSTotal = 'SSTotal'
-kMSWithin = 'MSWithin'
-kMSBetween = 'MSBetween'
-kTestStat = 'F'
-kContrastTestStat = 'Psi-hat'
-kPValue = 'p'
-kContrasts = 'Contrasts'
-kFactorNames = 'Factors'
-kFactorLevelNames = 'Factor Levels'
-kEffectSize = 'Effect Size'
-kPartialEffectSize = 'Partial Effect Size'
-
-kwGrandMean = 'grand_mean'
-kwCombinedSample = 'combined_sample'
-
 def one_way(input_file='',                              # path to a csv file
             factor_key='Group', outcome_key='Outcome',  # keys for the columns specifying the factor and the outcome variable
             alpha=0.05,                                 # values for the hypothesis test
@@ -498,117 +442,4 @@ def one_way(input_file='',                              # path to a csv file
     
     # return the results
     return results
-
-def estimate_contrast_complete_effect(f_psi, f_omnibus, num_groups, group_size):
-    """Estimate the complete effect size for a contrast, or the proportion of total variability that the contrast captures"""
-    if not isinstance(f_psi, float) and not isinstance(f_psi, int): raise TypeError('F for contrast must be a decimal number')
-    if not isinstance(f_omnibus, float) and not isinstance(f_omnibus, int): raise TypeError('Omnibus F must be a decimal number')
-    if not isinstance(num_groups, int): raise TypeError('Number of groups must be an integer')
-    if not isinstance(group_size, int): raise TypeError('Group size must be an integer')
-    return (f_psi-1)/float((num_groups-1)*(f_omnibus-1)+num_groups*group_size)
-
-def estimate_contrast_partial_effect(f_psi, group_size):
-    """Estimate the partial effect size for a contrast, or the variability of the contrast relative to itself and the error"""
-    if not isinstance(f_psi, float) and not isinstance(f_psi, int): raise TypeError('F for contrast must be a decimal number')
-    if not isinstance(group_size, int): raise TypeError('Group size must be an integer')
-    print f_psi, group_size
-    return (f_psi-1)/float(f_psi-1+2*group_size)
-
-def estimate_omnibus_effect_size_from_f(f_omnibus, number_of_groups, group_size):
-    """Return an estimate of omega squared using the supplied parameters. Note: assumes equal group size. I don't know how to do it for unequal groups."""
-    if not isinstance(f_omnibus, float) and not isinstance(f_omnibus, int): raise TypeError('Omnibus F must be a decimal number')
-    if not isinstance(number_of_groups, int): raise TypeError('Number of groups must be an integer')
-    if not isinstance(group_size, int): raise TypeError('Group size must be an integer')
-    f_omnibus = float(f_omnibus)
-    return (number_of_groups-1)*(f_omnibus-1) / ((number_of_groups-1)*(f_omnibus-1)+number_of_groups*group_size)
-
-def estimate_omnibus_effect_size_from_summary(ssb, sst, msw, number_of_groups):
-    """Return an estimate of omega squared using the supplied parameters."""
-    if not isinstance(ssb, float) and not isinstance(ssb, int): raise TypeError('Sum of squares between must be a decimal number')
-    if not isinstance(sst, float) and not isinstance(sst, int): raise TypeError('Sum of squares total must be a decimal number')
-    if not isinstance(msw, float) and not isinstance(msw, int): raise TypeError('Sum of squares total must be a decimal number')
-    if not isinstance(number_of_groups, int): raise TypeError('Number of groups must be an integer')
-    ssb = float(ssb)
-    sst = float(sst)
-    msw = float(msw)
-    return (ssb-(number_of_groups-1)*msw) / (sst+msw)
-
-def combine_samples(*args):
-    """Combine several lists/tuples into a single list"""
-    try: return list(itertools.chain.from_iterable([a for a in args]))
-    except: raise TypeError('Expected only lists or tuples')
-
-def get_grand_mean(*args):
-    """Get the grand mean of several lists/tuples of data"""
-    return stats.tmean(combine_samples(*args))
-
-def ss_between(*args, **kwargs):
-    """Get the sum of squared deviations of each group's mean compared to the grand mean of all groups"""
-    grand_mean = kwargs[kwGrandMean] if kwGrandMean in kwargs else get_grand_mean(*args)
-    return sum([len(a)*(grand_mean-stats.tmean(a))**2 for a in args])
-
-def __get_variability_of_group_means_around_grand_mean(*args, **kwargs):
-    """Get the variability of the group means around the grand mean"""
-    grand_mean = kwargs[kwGrandMean] if kwGrandMean in kwargs else get_grand_mean(args)
-    return sum((grand_mean-stats.tmean(g))**2 for g in args)/float(len(args))
-
-def ss_total(*args, **kwargs):
-    """Get the sum of squared deviations of each value compared to the grand mean"""
-    grand_mean = kwargs[kwGrandMean] if kwGrandMean in kwargs else get_grand_mean(*args)
-    combined_sample = kwargs[kwCombinedSample] if kwCombinedSample in kwargs else combine_samples(*args)
-    return sum([(x-grand_mean)**2 for x in combined_sample])
-
-def pooled_standard_error(*args):
-    """Get the pooled standard error of the groups"""
-    try: return sum(len(a)*stats.tvar(a) for a in args)/float(sum(len(a)-1 for a in args))
-    except: raise TypeError('Expected only lists or tuples')
-
-def ss_within(*args):
-    """Get the sum of square deviations of each value compared to its group mean value"""
-    try: return sum((len(a)-1)*stats.tvar(a) for a in args)
-    except: raise TypeError('Expected only lists or tuples')
-
 '''
-"""
-def print_oneway_test_results(results):
-    x = results[kTestStat]
-    col_wid= 16
-    summary = u'''
-Omnibus Test Results:
-----------------------------------------------------------------------------------------------------------------------
-Source                         SS               df               MS                F                p               \u03c9\u00b2
----------------- ---------------- ---------------- ---------------- ---------------- ---------------- ----------------
-%s %s %s %s %s %s %s
-Within           %s %s %s
-Total            %s %s
-'''%(
-     (results[kFactorNames][0]).ljust(col_wid),
-     ('%.5f'%results[kSSBetween]).rjust(col_wid), ('%.5f'%results[kDFBetween]).rjust(col_wid), ('%.5f'%results[kMSBetween]).rjust(col_wid), ('%.5f'%x).rjust(col_wid), ('%.5f'%(1.0-stats.f.cdf(x, results[kDFBetween], results[kDFWithin]))).rjust(col_wid), ('%.5f'%results[kEffectSize]).rjust(col_wid), 
-     ('%.5f'%results[kSSWithin]).rjust(col_wid), ('%.5f'%results[kDFWithin]).rjust(col_wid), ('%.5f'%results[kMSWithin]).rjust(col_wid),
-     ('%.5f'%results[kSSTotal]).rjust(col_wid), ('%.5f'%results[kDFTotal]).rjust(col_wid)
-     )
-    contrasts = ''
-    if results[kContrasts]:
-        contrasts = u'''
-Contrast Results:
----------------------------------------------------------------------------------------------------------------------------------------
-Source                         SS               df               MS                F                p       partial \u03c9\u00b2      complete \u03c9\u00b2
----------------- ---------------- ---------------- ---------------- ---------------- ---------------- ---------------- ----------------'''
-        for c in results[kContrasts]:
-            contrasts += u'''
-%s %s %s %s %s %s %s %s\n'''%(
-                      ('\n'.join(('%s'%f).ljust(col_wid) for f in c[kFactorLevelNames])),
-                      ('%.5f'%c[kSSBetween]).rjust(col_wid),
-                      ('%.5f'%c[kDFBetween]).rjust(col_wid),
-                      ('%.5f'%c[kSSBetween]).rjust(col_wid),
-                      ('%.5f'%c[kTestStat]).rjust(col_wid),
-                      ('%.7f'%(1.0-stats.f.cdf(c[kTestStat], 1, results[kDFWithin]))).rjust(col_wid),
-                      ('%.7f'%c[kPartialEffectSize]).rjust(col_wid),
-                      ('%.7f'%c[kEffectSize]).rjust(col_wid)
-                      )
-        contrasts += u'''
-Within           %s %s %s
-'''%(
-     str(results[kSSWithin]).rjust(col_wid), str(results[kDFWithin]).rjust(col_wid), str(results[kMSWithin]).rjust(col_wid)[:col_wid])
-    print summary+contrasts
-"""
